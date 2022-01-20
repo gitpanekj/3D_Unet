@@ -24,7 +24,8 @@ def main(config) -> None:
     n_preds = config['n_preds']
     seg_path = config["seg_path"]
     predictions = np.zeros((n_preds,128,128,128)).astype('uint8')
-    targets = np.zeros((n_preds,128,128,128)).astype('uint8')
+    targets =  np.zeros((n_preds,128,128,128)).astype('uint8')
+ 
     os.mkdir(seg_path)
 
     unet = Unet()
@@ -46,7 +47,7 @@ def main(config) -> None:
         history['frame'].append(iter)
         history[f"{metric.name}"].append(metric.result())
         predictions[iter] = tf.argmax(pred, axis=-1)
-        targets[iter] = tf.argmax(y, axis=-1)
+        targets[iter] = tf.argmax(pred, axis=-1)
         del pred
         iter += 1
         if iter == n_preds:
@@ -62,8 +63,7 @@ def main(config) -> None:
     tifffile.imwrite(file=seg_path + f"/targets.tif",
                      data=targets,
                      imagej=True,
-                     metadata=metadata) 
-
+                     metadata=metadata)
 
 if __name__ ==  '__main__':
     main()

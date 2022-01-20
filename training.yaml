@@ -1,5 +1,5 @@
 # folder path where all the result will be saved
-base_path: /OV-data/JP/results/focal_30
+base_path: /OV-data/JP/results/del
 # folder path containing training and validation folder
 data_path: /OV-data/JP/BraTS_2020
 sample_path: False  # data sample which will be eventualy used in the AG callback
@@ -17,8 +17,8 @@ unet:
     output_channels: 4
     last_activation: 'softmax'
   fit:
-    epochs: 30
+    epochs: 2
     batch_size: 2
     steps_per_epoch: 150
     track_AG: False       # if AG callbacks should be used
-    validation_steps: 44
+    validation_steps: 5

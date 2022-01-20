@@ -3,10 +3,12 @@ import nibabel as nib
 import os
 import numpy as np
 import tensorflow.keras.backend as K
+import tensorflow as tf
 from itertools import cycle
 from typing import Optional, List
 from src.helper_functions import standardization, normalization
 import logging
+from random import shuffle
 
 class DataGenerator:
     def __init__(self, path: bytes, target_pattern: bytes, sample_patterns: Optional[List[bytes]]=None, class_idxs: Optional[List[int]]=None, logging: bool=False):
@@ -123,9 +125,18 @@ class DataGenerator:
         return x
 
 class LoadFromFolder:
-    def __init__(self, X_folder, y_folder):
-        self.X_paths = cycle(sorted(list(map(lambda x: os.path.join(X_folder, x), os.listdir(X_folder)))))
-        self.y_paths = cycle(sorted(list(map(lambda x: os.path.join(y_folder, x), os.listdir(y_folder)))))
+    def __init__(self, X_folder, y_folder, shuffle_=False):
+        X_paths = sorted(list(map(lambda x: os.path.join(X_folder, x), os.listdir(X_folder))))
+        y_paths = sorted(list(map(lambda x: os.path.join(y_folder, x), os.listdir(y_folder))))
+        assert len(X_paths) == len(y_paths), "Inequivalent number of samples and targers."
+        self.pairs = [(x,y) for x,y in zip(X_paths, y_paths)]
+        del X_paths
+        del y_paths
+        shuffle(self.pairs)
+        self.n_samples = len(self.pairs)
+        self.pair_cycle = cycle(self.pairs)
+        self.iteration = 0
+        self.shuffle = shuffle_
 
     def __iter__(self):
         return self
@@ -133,9 +144,18 @@ class LoadFromFolder:
     def __next__(self):
         return self.next()
     
+    def shuffle_cycle(self):
+        shuffle(self.pairs)
+        self.pair_cycle = cycle(self.pairs)
+        self.iteration = 0
+    
     def next(self):
-        X_path = next(self.X_paths)
-        y_path = next(self.y_paths)
+        if self.shuffle:
+            if self.iteration == self.n_samples:
+                self.shuffle_cycle()
+
+        X_path, y_path = next(self.pair_cycle)
         X = np.load(X_path)
         y = np.load(y_path)
+        self.iteration += 1
         return X,y

@@ -7,7 +7,7 @@ from src.models.internals.callbacks import AGCallback
 from src.utils import parse_config, LoggingConfig
 # libraries
 import tensorflow as tf
-from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
 import numpy as np
 import pandas as pd
 
@@ -53,8 +53,12 @@ def main(config: dict) -> None:
     # -> Loss and Metrics are hard typed
     # metrics
     f_score = DiceScore(threshold=0.5)
-    iou_score = JaccardIndex(threshold=0.5)
-    metrics = [f_score,iou_score]
+    iou_score_0 = JaccardIndex(threshold=0.5, class_indexes=[0], name="BackGround")
+    iou_score_1 = JaccardIndex(threshold=0.5, class_indexes=[1], name="Core")
+    iou_score_2 = JaccardIndex(threshold=0.5, class_indexes=[2], name="Edema")
+    iou_score_3 = JaccardIndex(threshold=0.5, class_indexes=[3], name="Enhancing")
+    
+    metrics = [f_score,iou_score_0,iou_score_1,iou_score_2,iou_score_3]
     # losses
     focal = CategoricalFocalLoss(gamma=2)
     #dice = DiceLoss()
@@ -66,7 +70,8 @@ def main(config: dict) -> None:
 
     # Callbacks
     checkpoint = ModelCheckpoint(folder_path + "/model/checkpoints/cp.ckpt", save_weights_only=True, save_best_only=True)
-    callbacks=[checkpoint]
+    tensorboard = TensorBoard(log_dir=folder_path, histogram_freq=1,write_images=True,)
+    callbacks=[checkpoint, tensorboard]
     if  config['unet']['fit'].pop('track_AG') and config['sample_path'] and config['unet']['build']['use_attention']:
         sample = np.load(config['sample_path'])
         callbacks.append(AGCallback(folder_path, sample))
@@ -75,7 +80,7 @@ def main(config: dict) -> None:
 
     # predefined datasets combining WT_1 and KO_21 data for training and WT_3 for validation
     # args = [base_path, sample_patterns, target_patterns, subdirs, data_format, logging]
-    training_args = [data_path + '/training/samples', data_path + '/training/targets']
+    training_args = [data_path + '/training/samples', data_path + '/training/targets', True]
     validation_args = [data_path + '/validation/samples', data_path + '/validation/targets']
     training = tf.data.Dataset.from_generator(LoadFromFolder,
                                               args=training_args,

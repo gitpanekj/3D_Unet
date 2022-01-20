@@ -10,7 +10,7 @@ def _gather_channels(x: np.array, indexes: Optional[List[int]]=None) -> np.array
         Only supported for array axes order format (B,Z,Y,X,C)
     """
     if not isinstance(indexes, type(None)):
-        x = K.gather(x, indices=indexes, axis=-1) 
+        x = tf.gather(x, indices=indexes, axis=-1)
     return x
 
 @tf.autograph.experimental.do_not_convert
