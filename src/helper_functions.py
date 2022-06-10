@@ -41,3 +41,18 @@ def normalization(x, keepdims=True):
 @tf.function
 def standardization(x, keepdims=True):
     x = (x - K.mean(x, keepdims=keepdims))/K.var(x, keepdims=keepdims)
+
+@tf.function
+def min_max_scale(x, keepdims=True):
+    min_ = K.min(x, keepdims=keepdims)
+    return (x-min_)/(K.max(x, keepdims=keepdims)-min_)
+
+def one_hot_encode(data, classes):
+    n_classes = len(classes)
+    data = np.squeeze(data)
+    encoded = np.ndarray(data.shape + (n_classes,), dtype=np.uint8)
+    labels = np.eye(n_classes)
+
+    for i in classes:
+        encoded[data == i] = labels[i]
+    return encoded

@@ -1,0 +1,33 @@
+# For more information about each parameters read README.md \
+# and documentations of src/models/unet_core/unet_block
+
+# folder path where all the result will be saved
+base_path: ""
+training_sample_path:  ""
+training_target_path:  ""
+validation_sample_path:  ""
+validation_target_path:  ""
+AG_sample: False  # data sample which will be eventualy used in the AG callback
+
+generator:
+  sample_shape: !!python/tuple [~,~,~,~]  # XYZC
+  target_shape: !!python/tuple [~,~,~,~]  # XYZC
+
+unet:
+  build:
+    input_shape_: !!python/tuple [~,~,~,~] # XYZC
+    n_depth: ~
+    z_depth: ~
+    use_attention: ~
+    use_transconv: ~
+    normalization: ~
+    norm_kwargs: ~
+    output_probabilities: ~
+    output_channels: ~
+    last_activation: ~
+  fit:
+    epochs: ~
+    batch_size: ~
+    steps_per_epoch: ~
+    track_AG: ~       # if AG callbacks should be used
+    validation_steps: ~

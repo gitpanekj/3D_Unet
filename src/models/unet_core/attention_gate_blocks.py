@@ -1,5 +1,4 @@
 from tensorflow.keras.layers import Layer, Conv2D, Conv3D,UpSampling2D, UpSampling3D, Add, Multiply, Activation, BatchNormalization, LayerNormalization
-#from tensorflow_addons.layers import GroupNormalization
 import numpy as np
 
 
@@ -90,7 +89,7 @@ class AttentionGate_debug(Layer):
             self.norm_kwargs = norm_kwargs
 
     def call(self, lower_block, skip):
-        skip_shape = skip.shape[-1] # TODO: refactor excesive declerations
+        skip_shape = skip.shape[-1]
         self.kernel_1 = (1,)*2 if self.mode == '2D' else (1,)*3
         self.kernel_2 = (np.array(skip.shape[1:-1]) // np.array(lower_block.shape[1:-1])).astype(int)
         self.strides_2 = self.kernel_2

@@ -1,0 +1,5 @@
+sample_path: "" # path to input for network
+model_graph_path: "" # path to model graph
+model_weights_path: "" # path to model weights
+results: ""  # directory where fmap will be saved
+layer_names: [] # names of layers which fmaps are required

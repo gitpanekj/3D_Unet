@@ -51,7 +51,7 @@ class JaccardIndex(Metric):
         self.class_weights = class_weights
         self.epsilon = 1e-5
 
-    def update_state(self,y_true,y_pred, sample_weight=None):
+    def update_state(self,y_true,y_pred):
         y_true = _gather_channels(y_true, indexes=self.class_indexes)
         y_pred = _gather_channels(y_pred, indexes=self.class_indexes)
 
@@ -115,7 +115,7 @@ class DiceScore(Metric):
         self.class_weights = class_weights
         self.epsilon = 1e-5
     
-    def update_state(self, y_true, y_pred, sample_weight=None):
+    def update_state(self, y_true, y_pred):
         y_true = _gather_channels(y_true, indexes=self.class_indexes)
         y_pred = _gather_channels(y_pred, indexes=self.class_indexes)
 
@@ -175,7 +175,7 @@ class Precision(Metric):
         self.class_weights = class_weights
         self.epsilon = 1e-5 
     
-    def update_state(self, y_true, y_pred, sample_weight=None):
+    def update_state(self, y_true, y_pred):
         y_true = _gather_channels(y_true, indexes=self.class_indexes)
         y_pred = _gather_channels(y_pred, indexes=self.class_indexes)
 
@@ -224,19 +224,20 @@ class Recall(Metric):
             if None, do not perform thresholding
         """
 
-        super(Precision, self).__init__(name='Recall')
+        super(Recall, self).__init__(name='Recall')
         self.recall = self.add_weight(name='recall', initializer='zeros')
         self.class_indexes = class_indexes
         self.threshold = threshold
         self.class_weights = class_weights
         self.epsilon = 1e-5 
     
-    def update_state(self, y_true, y_pred, sample_weight=None):
+    def update_state(self, y_true, y_pred):
         y_true = _gather_channels(y_true, indexes=self.class_indexes)
         y_pred = _gather_channels(y_pred, indexes=self.class_indexes)
 
         y_pred = threshold_if_specified(y_pred, threshold=self.threshold)
 
+        y_pred = K.cast(y_pred, np.float32)
         y_true = K.cast(y_true, y_pred.dtype)
 
         axes = [0,1,2,3]

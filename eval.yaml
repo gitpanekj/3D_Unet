@@ -1,6 +1,0 @@
-data_path: /OV-data/JP/BraTS_2020
-n_preds: 1
-base_path: /OV-data/JP/results/focal_30
-model_graph: /OV-data/JP/results/focal_30/model/network_graph.json
-model_weights: /OV-data/JP/results/focal_30/model/checkpoints/cp.ckpt
-seg_path: /OV-data/JP/results/focal_30/segmentations

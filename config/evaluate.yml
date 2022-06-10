@@ -1,0 +1,5 @@
+seg_path: "" # directory with predictions
+target_path: "" # directory with corresponding targets
+result_path: "" # where .csv and other files will be saved
+data:
+  n_classes: ~ # number of classes for one_hot_encoding

@@ -1,13 +1,17 @@
 from src.models.unet_core.unet_block import UnetBlock
 from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
+from pandas import DataFrame
 import json
 import os
 
 class Unet:
-    """ Temporary unet model that should be later replaced
+    """ Temporary unet model class that mediates comunication between
+        internals, tensorflwo API and configuration scripts.
+        
+        Will be replaced for a subclass of tensorflow.models.Model in future.
 
-        for more information see doc. in unet_core/unet_block.py
+        For more information about config. see doc. in unet_core/unet_block.py.
     """
     def __init__(self):
         self.model = None
@@ -77,3 +81,7 @@ class Unet:
     def save_model_weights(self, filename):
         assert not isinstance(self.model, type(None)), 'Model has not been built yet'
         self.model.save_weights(filename)
+    
+    def save_training_history(self, path):
+        assert not isinstance(self.model, type(None)), 'Model has not been built yet'
+        DataFrame.from_dict(self.model.history.history).to_csv(path)

@@ -1,3 +1,8 @@
+"""
+The config for this file is specified via cmd when running the scripts.
+Config files are stored in the config folder.
+To run this script type  'python training.py --config path_to_your_config'  to you console
+"""
 # src imports
 from src.models.unet import Unet
 from src.data_handling.generator import LoadFromFolder
@@ -14,7 +19,7 @@ import pandas as pd
 
 import logging
 import yaml
-import os
+from os import join, mkdir
 from datetime import timedelta
 from time import time
 
@@ -28,15 +33,14 @@ def main(config: dict) -> None:
     """
 
 
-    data_path = config['data_path']
     folder_path = config["base_path"]
 
     try:
-        os.mkdir(folder_path)
+        mkdir(folder_path)
     except FileExistsError:
         raise FileExistsError(f"Directory {folder_path} already exists\n" +  
                                 "choose different value for experiment_folder parameter")
-    os.mkdir(os.path.join(folder_path, "model"))
+    mkdir(join(folder_path, "model"))
     with open(config["base_path"] + '/config.yaml', 'w') as file:
         yaml.dump(config, file, default_flow_style=False)
 
@@ -44,58 +48,64 @@ def main(config: dict) -> None:
 
     logging.info("Starting experiment")
 
-    # build network graph
+
+    ## BUILDING NETWORK GRAPH ##
     unet = Unet()
     unet.build(**config['unet']['build'])    
-    unet.save_model_graph(filename=folder_path+"/model/network_graph.json")
+    unet.save_model_graph(filename=join(folder_path,*("model","network_graph.json")))
 
-    # Compile
-    # -> Loss and Metrics are hard typed
+
+    ## COMPILATION OF NETWORK GRAPH ##
+    logging.info("Compiling network graph")
     # metrics
     f_score = DiceScore(threshold=0.5)
-    iou_score_0 = JaccardIndex(threshold=0.5, class_indexes=[0], name="BackGround")
-    iou_score_1 = JaccardIndex(threshold=0.5, class_indexes=[1], name="Core")
-    iou_score_2 = JaccardIndex(threshold=0.5, class_indexes=[2], name="Edema")
-    iou_score_3 = JaccardIndex(threshold=0.5, class_indexes=[3], name="Enhancing")
-    
-    metrics = [f_score,iou_score_0,iou_score_1,iou_score_2,iou_score_3]
+    metrics = [f_score]
     # losses
     focal = CategoricalFocalLoss(gamma=2)
-    #dice = DiceLoss()
+    dice = DiceLoss()
+    # compile
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
     unet.compile(optimizer = optimizer,
-                 loss = focal,
+                 loss = lambda y_true,y_pred: focal(y_true, y_pred) + dice(y_true,y_pred),
                  metrics = metrics)
 
 
-    # Callbacks
-    checkpoint = ModelCheckpoint(folder_path + "/model/checkpoints/cp.ckpt", save_weights_only=True, save_best_only=True)
-    tensorboard = TensorBoard(log_dir=folder_path, histogram_freq=1,write_images=True,)
-    callbacks=[checkpoint, tensorboard]
-    if  config['unet']['fit'].pop('track_AG') and config['sample_path'] and config['unet']['build']['use_attention']:
-        sample = np.load(config['sample_path'])
+    ## CALLBACKS ##
+    logging.info("Defining callbacks") 
+    checkpoint = ModelCheckpoint(join(folder_path, *("model","checkpoints","cp.ckpt")), save_weights_only=True, save_best_only=True)
+    callbacks=[checkpoint]
+
+    # ignore lines 76-78 unless an attention gate structure is used, for more info see README.md
+    if  config['unet']['fit'].pop('track_AG') and config['AG_sample'] and config['unet']['build']['use_attention']:
+        sample = np.load(config['AG_sample'])
         callbacks.append(AGCallback(folder_path, sample))
 
 
+    ## DEFINING DATA GENERATORS ##
+    logging.info("Defininf data generators") 
+    training_args = [config['training_sample_path'], config['training_target_path']]
+    validation_args = [config['validation_sample_path'], config['validation_target_path']]
+    sample_shape, target_shape = config['generator']['sample_shape'], config['generator']['target_shape']
 
-    # predefined datasets combining WT_1 and KO_21 data for training and WT_3 for validation
-    # args = [base_path, sample_patterns, target_patterns, subdirs, data_format, logging]
-    training_args = [data_path + '/training/samples', data_path + '/training/targets', True]
-    validation_args = [data_path + '/validation/samples', data_path + '/validation/targets']
     training = tf.data.Dataset.from_generator(LoadFromFolder,
                                               args=training_args,
                                               output_types=((tf.float32),(tf.float32)),
-                                              output_shapes=((128,128,128,3),((128,128,128,4)))
+                                              output_shapes=(sample_shape, target_shape)
                                               ).batch(config['unet']['fit'].pop('batch_size'))
     validation = tf.data.Dataset.from_generator(LoadFromFolder,
                                                 args=validation_args,
                                                 output_types=((tf.float32),(tf.float32)),
-                                                output_shapes=((128,128,128,3),((128,128,128,4)))
+                                                output_shapes=(sample_shape, target_shape)
                                                 ).batch(1)
 
+
+    ## TRAINING ##
+    logging.info("Training started") 
     unet.train(training, callbacks=callbacks, validation_dataset=validation, **config['unet']['fit'])
 
-    pd.DataFrame.from_dict(unet.model.history.history).to_csv(folder_path + '/history.csv')
+    ## SAVING TRAINING HISTORY
+    logging.info("Saving training history")
+    unet.save_training_history(join(folder_path, 'history.csv'))
 
 
 if __name__ == '__main__':

@@ -1,6 +1,5 @@
 import tensorflow as tf
 # normalizations
-#from tensorflow_addons.layers import GroupNormalization
 from tensorflow.keras.layers import BatchNormalization, LayerNormalization
 # layers
 from tensorflow.keras.layers import Conv2D, Conv3D, Conv2DTranspose, Conv3DTranspose

@@ -1,0 +1,6 @@
+sample_path: "" # direct folder with preprocessed validation data
+n_preds: ~
+
+model_graph:  # path to model graph
+model_weights:  # path to model weights, cp.ckpt
+seg_path:  # where preds will be store
